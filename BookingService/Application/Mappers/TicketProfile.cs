@@ -9,7 +9,11 @@ public class TicketProfile : Profile
     public TicketProfile()
     {
         CreateMap<TicketDto, Ticket>();
-        CreateMap<Ticket, TicketDto>();
+        CreateMap<Ticket, TicketDto>()
+            .ForMember(
+                dest => dest.UserIds,
+                opt => opt.MapFrom(src => src.UserTickets.Select(ut => ut.UserId))
+            );
         
         CreateMap<CreateTicketDto, Ticket>();
         CreateMap<Ticket, CreateTicketDto>();
@@ -21,7 +25,6 @@ public class TicketProfile : Profile
             .ForMember(
                 dest => dest.Items, 
                 opt => opt.MapFrom(src => src.Items)
-                );
-        
+            );
     }
 }

@@ -1,6 +1,5 @@
 ﻿using Application.DTOs;
 using Application.ResultPatterns;
-using Domain.Entities;
 
 namespace Application.Interfaces;
 

@@ -2,7 +2,6 @@
 using System.Security.Claims;
 using System.Text;
 using Application.Interfaces.Auth;
-using Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
@@ -12,14 +11,23 @@ public class JwtService : IJwtService
 {
     private readonly IConfiguration _configuration;
     private readonly SymmetricSecurityKey _key;
-    
+    private readonly string _issuer;
+    private readonly string _audience;
+    private readonly int _expirationMinutes;
+
     public JwtService(IConfiguration configuration)
     {
         _configuration = configuration;
 
         var key = _configuration["Jwt:SecretKey"];
         _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+
+        _issuer = _configuration["Jwt:Issuer"];
+        _audience = _configuration["Jwt:Audience"];
+        _expirationMinutes = int.Parse(_configuration["Jwt:ExpirationInMinutes"]);
     }
+    
+    public int TokenExpirationMinutes => _expirationMinutes;
 
     public string GenerateToken(int userId, string email, string role)
     {
@@ -34,7 +42,9 @@ public class JwtService : IJwtService
         SecurityTokenDescriptor tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddDays(3),
+            Issuer = _issuer,
+            Audience = _audience,
+            Expires = DateTime.UtcNow.AddMinutes(_expirationMinutes),
             SigningCredentials = signingCredentials
         };
         

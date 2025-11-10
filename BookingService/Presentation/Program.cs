@@ -4,6 +4,7 @@ using Application.Interfaces.Auth;
 using Application.Interfaces.Cache;
 using Application.Interfaces.UnitOfWork;
 using Application.Mappers;
+using Application.Options;
 using Application.Services;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
@@ -11,6 +12,7 @@ using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Presentation.Middlewares;
 using StackExchange.Redis;
 
@@ -30,6 +32,9 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(redis);
 builder.Services.AddSingleton<ICacheService, RedisCacheService>();
 
 builder.Services.AddControllers();
+
+builder.Services.Configure<InternalAuthOptions>(
+    builder.Configuration.GetSection("InternalAuth"));
 
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IEventRepository, EventRepository>();
@@ -61,21 +66,44 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("InternalService",
+        policy => policy.RequireRole("InternalService"));
+});
 
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    var jwtScheme = new OpenApiSecurityScheme
+    {
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Description = "Input {token}",
+        Reference = new OpenApiReference
+        {
+            Id = JwtBearerDefaults.AuthenticationScheme,
+            Type = ReferenceType.SecurityScheme
+        }
+    };
+
+    c.AddSecurityDefinition(jwtScheme.Reference.Id, jwtScheme);
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        { jwtScheme, Array.Empty<string>() }
+    });
+});
 
 builder.Services.AddAutoMapper(cfg => { }, typeof(EventProfile), typeof(TicketProfile), typeof(UserProfile), typeof(VenueProfile));
-//
-// builder.Services.AddHttpClient<IUserApiClientService, UserApiService>(client =>
-// {
-//     client.BaseAddress = new Uri("http://localhost:5031");
-// });
 
 var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseMiddleware<InternalServiceMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

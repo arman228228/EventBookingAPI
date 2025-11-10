@@ -21,14 +21,14 @@ public class UserController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<UserDto>> CreateAsync(CreateUserDto request)
     {
-        var userDto = await _userService.CreateAsync(request);
+        var userCreationResult = await _userService.CreateAsync(request);
 
-        if (userDto == null)
+        if (userCreationResult.Success == false)
         {
-            return BadRequest($"No tickets found.");
+            return BadRequest(userCreationResult.ErrorMessage);
         }
 
-        return CreatedAtAction(nameof(GetByIdAsync), new { id = userDto.Id }, userDto);
+        return CreatedAtAction(nameof(GetByIdAsync), new { id = userCreationResult.User.Id }, userCreationResult.User);
     }
     
     [HttpGet]

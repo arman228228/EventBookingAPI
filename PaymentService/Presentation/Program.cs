@@ -1,10 +1,12 @@
 ﻿using Application.Interfaces;
 using Application.Mappers;
+using Application.Options;
 using Application.Services;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,15 +15,20 @@ builder.WebHost.UseUrls("http://localhost:5079");
 var connectionString = builder.Configuration.GetConnectionString("Default");
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 
+builder.Services.Configure<BookingServiceOptions>(
+    builder.Configuration.GetSection("BookingService"));
+builder.Services.AddTransient<InternalSecretHandler>();
+
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
-builder.Services.AddHttpClient<IBookingApiClient, BookingApiClient>(client =>
+builder.Services.AddHttpClient<IBookingApiClient, BookingApiClient>((sp, client) =>
 {
-    client.BaseAddress = new Uri("http://localhost:5001");
-});
+    var options = sp.GetRequiredService<IOptions<BookingServiceOptions>>().Value;
+    client.BaseAddress = new Uri(options.BaseUrl);
+}).AddHttpMessageHandler<InternalSecretHandler>();
 
 builder.Services.AddSwaggerGen();
 

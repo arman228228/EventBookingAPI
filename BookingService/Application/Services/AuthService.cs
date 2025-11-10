@@ -3,7 +3,6 @@ using Application.DTOs.Auth;
 using Application.Interfaces;
 using Application.Interfaces.Auth;
 using AutoMapper;
-using Domain.Entities;
 
 namespace Application.Services;
 
@@ -27,51 +26,49 @@ public class AuthService : IAuthService
             return null;
         }
         
-        string passwordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
-
         var userToCreate = new CreateUserDto
         {
             Name = registerDto.Name,
             Email = registerDto.Email,
-            PasswordHash = passwordHash
+            Password = registerDto.Password
         };
         
         var createdUser = await _userService.CreateAsync(userToCreate);
-
-        if (createdUser == null)
+        
+        if (createdUser.Success == false)
         {
             return null;
         }
         
-        var token = _jwtService.GenerateToken(createdUser.Id, createdUser.Email, createdUser.Role);
+        var token = _jwtService.GenerateToken(createdUser.User.Id, createdUser.User.Email, createdUser.User.Role);
+        
+        var expiresAt = DateTime.UtcNow.AddMinutes(_jwtService.TokenExpirationMinutes);
         
         return new AuthResponseDto()
         {
-            Token = token
+            Token = token,
+            ExpiresAt = expiresAt
         };
     }
 
     public async Task<AuthResponseDto?> LoginAsync(LoginDto loginDto)
     {
-        var userDto = await _userService.GetByEmailAsync(loginDto.Email);
-        
-        if (userDto == null)
+        var user = await _userService.GetInternalByEmailAsync(loginDto.Email);
+        if (user == null) return null;
+
+        if (!BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
         {
             return null;
         }
         
-        bool isPasswordCorrect = BCrypt.Net.BCrypt.Verify(loginDto.Password, userDto.PasswordHash);
+        var token = _jwtService.GenerateToken(user.Id, user.Email, user.Role);
         
-        if (!isPasswordCorrect)
-        {
-            return null;
-        }
-        
-        var token = _jwtService.GenerateToken(userDto.Id, userDto.Email, userDto.Role);
+        var expiresAt = DateTime.UtcNow.AddMinutes(_jwtService.TokenExpirationMinutes);
         
         return new AuthResponseDto()
         {
-            Token = token
+            Token = token,
+            ExpiresAt = expiresAt
         };
     }
 }

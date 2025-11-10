@@ -12,9 +12,10 @@ public class CreateUserDto
     [Required]
     [EmailAddress]
     public string Email { get; set; }
-    
+
     [Required]
-    public string PasswordHash { get; set; }
+    [MinLength(6, ErrorMessage = "Password must be at least 6 characters long")]
+    public string Password { get; set; }
     
     public string Role { get; set; } = "User";
     

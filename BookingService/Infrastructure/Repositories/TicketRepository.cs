@@ -26,17 +26,24 @@ public class TicketRepository : ITicketRepository
     
     public async Task<Ticket?> GetByIdAsync(int id)
     {
-        return await _dbContext.Tickets.FindAsync(id);
+        return await _dbContext.Tickets
+            .Include(t => t.UserTickets)
+            .FirstOrDefaultAsync(t => t.Id == id);
     }
 
     public async Task<List<Ticket>> GetByIdsAsync(List<int> ticketIds)
     {
-        return await _dbContext.Tickets.Where(t => ticketIds.Contains(t.Id)).ToListAsync();
+        return await _dbContext.Tickets
+            .Where(t => ticketIds.Contains(t.Id))
+            .Include(t => t.UserTickets)
+            .ToListAsync();
     }
     
     public async Task<List<Ticket>> GetAllAsync()
     {
-        return await _dbContext.Tickets.ToListAsync();
+        return await _dbContext.Tickets
+            .Include(t => t.UserTickets)
+            .ToListAsync();
     }
     
     public async Task<PagedResult<Ticket>> GetTickets(int page = 1, int pageSize = 10)
@@ -46,6 +53,7 @@ public class TicketRepository : ITicketRepository
         var items = await query
             .OrderBy(q => q.Id)
             .Skip((page - 1) * pageSize)
+            .Include(t => t.UserTickets)
             .Take(pageSize)
             .ToListAsync();
 

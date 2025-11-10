@@ -31,7 +31,7 @@ public class PaymentService : IPaymentService
             };
         }
         
-        if(dto.Amount != ticket.Price)
+        if(dto.Amount < ticket.Price)
         {
             return new PaymentCreationResult
             {
