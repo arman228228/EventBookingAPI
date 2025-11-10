@@ -117,7 +117,7 @@ docker-compose down -v
 
 ---
 
-## API (Short Overview)
+## API
 
 ### BookingService
 
