@@ -1,0 +1,33 @@
+/packages/
+
+# Ignore IDE junk
+riderModule.iml
+/_ReSharper.Caches/
+.idea/
+**/.vs/
+**/.idea/
+**/.vscode/
+
+# Ignore build outputs
+bin/
+obj/
+**/bin/
+**/obj/
+*.dll
+*.exe
+*.pdb
+
+# Ignore user config
+**/*.user
+**/*.suo
+
+# Ignore all appsettings except example
+**/appsettings.json
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/appsettings.*.json
+
+!**/appsettings.Example.json
+
+docker-compose.override.yml
+.dockerignore
