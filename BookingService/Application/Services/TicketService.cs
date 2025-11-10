@@ -168,6 +168,7 @@ public class TicketService : ITicketService
             var ticket = await _unitOfWork._tickets.GetByIdAsync(id);
             if (ticket == null)
             {
+                await _unitOfWork.RollbackAsync();
                 return false;
             }
 

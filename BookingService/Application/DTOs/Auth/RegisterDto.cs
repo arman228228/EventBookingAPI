@@ -5,11 +5,17 @@ namespace Application.DTOs.Auth;
 public class RegisterDto
 {
     [Required]
-    public string Name { get; set; }
-    
-    [EmailAddress]
-    public string Email { get; set; }
-    
+    [MinLength(3)]
+    [MaxLength(32)]
+    public string Name { get; set; } = null!;
+
     [Required]
-    public string Password { get; set; }
+    [EmailAddress]
+    [MaxLength(256)]
+    public string Email { get; set; } = null!;
+
+    [Required]
+    [MinLength(6)]
+    [MaxLength(32)]
+    public string Password { get; set; } = null!;
 }
